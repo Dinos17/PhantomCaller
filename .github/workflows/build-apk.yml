@@ -1,1 +1,44 @@
+name: Build PhantomCaller APK
 
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    env:
+      ANDROID_API: 33
+      ANDROID_BUILD_TOOLS: 33.0.2
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: Install Dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y python3-dev git ffmpeg libsdl2-dev \
+            libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev \
+            libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev wget unzip
+          pip install --upgrade buildozer
+
+      - name: Initialize Buildozer
+        run: |
+          buildozer init || echo "buildozer.spec already exists"
+
+      - name: Build APK
+        run: |
+          buildozer -v android debug
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: phantomcaller-apk
+          path: bin/*.apk
